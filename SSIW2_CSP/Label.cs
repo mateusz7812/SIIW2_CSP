@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SSIW2_CSP
 {
-    class Label<T> where T: struct
+    class Label<T>: ILabel<T> where T: struct
     {
         public T? Value { get; set; } = null;
         public IDomain<T> Domain { get; }

@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SSIW2_CSP
 {
-    class ConstDomain<T>: IDomain<T>
+    class ConstDomain<T> : IDomain<T>
     {
 
-        public IEnumerable<T> Values { get; init; }
+        public IList<T> Values { get; init; }
 
         public ConstDomain(T value)
         {
-            Values = Enumerable.Repeat(value, 1);
+            Values = Enumerable.Repeat(value, 1).ToList();
         }
     }
 }

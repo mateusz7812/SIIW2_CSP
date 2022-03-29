@@ -4,8 +4,9 @@ namespace SSIW2_CSP
 {
     interface IDomainCrawler<T> where T : struct
     {
-        void SetNext(IEnumerable<Label<T>> Labels);
-        bool HasNext();
-        void SetReturn(List<Label<T>> labels);
+        void SetNext();
+        bool HasNext { get; }
+        void SetReturn();
+        void InitializeLabels(List<ILabel<T>> labels);
     }
 }

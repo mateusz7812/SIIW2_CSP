@@ -1,27 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SSIW2_CSP
 {
-    class TwoLabelConstraint<T> : IConstraint where T: struct
+    class TwoLabelConstraint<T> : IConstraint where T : struct
     {
-        private readonly Label<T> first;
-        private readonly Label<T> second;
-        private readonly Func<Label<T>, Label<T>, bool> func;
+        private readonly ILabel<T> first;
+        private readonly ILabel<T> second;
+        private readonly Func<ILabel<T>, ILabel<T>, bool> func;
 
-        public TwoLabelConstraint(in Label<T> first, in Label<T> second, in Func<Label<T>, Label<T>, bool> func)
+        public TwoLabelConstraint(in ILabel<T> first, in ILabel<T> second, in Func<ILabel<T>, ILabel<T>, bool> func)
         {
             this.first = first;
             this.second = second;
             this.func = func;
         }
-        
+
         public bool IsSatisfied()
         {
-            if((first.Value is null) || (second.Value is null))
+            if ((first.Value is null) || (second.Value is null))
             {
                 return true;
             }
