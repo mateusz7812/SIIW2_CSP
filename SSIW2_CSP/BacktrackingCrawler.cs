@@ -14,7 +14,6 @@ namespace SSIW2_CSP
                 get => Label.Value; 
                 set => Label.Value = value; 
             }
-
             public IDomain<T> Domain => Label.Domain;
 
             public LabelDecorator(ILabel<T> label)
@@ -40,6 +39,11 @@ namespace SSIW2_CSP
         private List<LabelDecorator<T>> Labels { get; set; } = new List<LabelDecorator<T>>();
         public bool HasNext { get; private set; } = true;
         private int currentLabelIndex = 0;
+        private Problem<T> Problem { get; init; }
+        public BacktrackingCrawler(Problem<T> problem)
+        {
+            Problem = problem;
+        }
 
         public void InitializeLabels(List<ILabel<T>> labels)
         {
@@ -64,7 +68,7 @@ namespace SSIW2_CSP
                 currentLabelIndex += 1;
             }
             Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new { Index = i, Value = x })
-                .GroupBy(x => x.Index / 6)
+                .GroupBy(x => x.Index / Problem.Dimension)
                 .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))));
         }
 
@@ -82,6 +86,4 @@ namespace SSIW2_CSP
             }
         }
     }
-
-
 }

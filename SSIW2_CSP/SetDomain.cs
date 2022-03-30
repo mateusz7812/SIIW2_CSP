@@ -6,6 +6,17 @@ namespace SSIW2_CSP
 {
     class SetDomain<T> : IDomain<T>, IEnumerable<T>
     {
+        public SetDomain()
+        {
+        }
+
+        public SetDomain(IEnumerable<T> items)
+        {
+            foreach(T item in items)
+            {
+                Add(item);
+            }
+        }
 
         public IList<T> Values { get; init; } = new List<T>();
 

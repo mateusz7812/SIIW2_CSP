@@ -5,11 +5,11 @@ using System.Threading;
 
 namespace SSIW2_CSP
 {
-    class AbstractController<T> : IController<T> where T : struct
+    class Controller<T> : IController<T> where T : struct
     {
         private IDomainCrawler<T> crawler { get; set; }
 
-        public AbstractController(IDomainCrawler<T> crawler, List<ILabel<T>> labels, List<IConstraint> constraints)
+        public Controller(IDomainCrawler<T> crawler, List<ILabel<T>> labels, List<IConstraint> constraints)
         {
             this.crawler = crawler;
             Labels = labels;
@@ -37,12 +37,8 @@ namespace SSIW2_CSP
                     crawler.SetReturn();
                 }
                 crawler.SetNext();
-                //Console.WriteLine(string.Join(" ", Labels.Select(l => l.Value)));
-                //Thread.Sleep(500);
             }
             return Solutions.ToArray();
         }
-
-
     }
 }

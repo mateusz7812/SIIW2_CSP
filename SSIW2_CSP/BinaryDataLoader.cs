@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace SSIW2_CSP
 {
-    class BinaryDataLoader
+    class BinaryDataLoader: IDataLoader
     {
         static string path = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
         private readonly string file_name;
@@ -56,67 +56,79 @@ namespace SSIW2_CSP
                     horizontal_lines [i].Add(label);
                 }
             }
-            List<ILabel<int>> vertical_line = vertical_lines [0];
-            //constraints.Add(
-            //        new ListConstraint<int>(
-            //            ref labels,
-            //            labels =>
-            //            {
-            //                return labels.Count(l => l.Value == 1) < (Dimension / 2) && labels.Count(l => l.Value == 0) < (Dimension / 2);
-            //            }));
-            //constraints.Add(
-            //        new ListConstraint<int>(
-            //            ref vertical_line,
-            //            labels =>
-            //            {
-            //                return labels.Count(l => l.Value == 1) < (Dimension / 2) && labels.Count(l => l.Value == 0) < (Dimension / 2);
-            //            }));
+            constraints.Add(
+                new Constraint(
+                    () => AllLinesDifferent(vertical_lines)));
+
+            constraints.Add(
+                new Constraint(
+                    () => AllLinesDifferent(horizontal_lines)));
             constraints.AddRange(vertical_lines.Union(horizontal_lines)
-                .SelectMany(line => new List<ListConstraint<int>>() {
-                    new ListConstraint<int>(
-                        line,
-                        labels => {
-                            //Console.WriteLine("test => " + string.Join(" ", labels.Select(l => l.Value)));
-                            return labels.Count(l => l.Value == 1) <= (Dimension / 2) && labels.Count(l => l.Value == 0) <= (Dimension / 2);
-                        }),
-                    new ListConstraint<int>(
-                        line,
-                        labels =>
+                .SelectMany(line => new List<IConstraint>() {
+                    new Constraint(
+                        () => line.Count(l => l.Value == 1) <= (Dimension / 2) && line.Count(l => l.Value == 0) <= (Dimension / 2)),
+                    new Constraint(
+                        () => WithoutThreeSameNumbers(line)                        )
+                }));
+        }
+
+        private bool AllLinesDifferent(List<List<ILabel<int>>> lines)
+        {
+            int start_index = 0;
+            for (int i = start_index; i < Dimension; i++)
+            {
+                for (int j = i + 1; j < Dimension; j++)
+                {
+                    bool same = true;
+                    for (int k = 0; k < Dimension; k++)
+                    {
+                        if (lines [i] [k] == null || lines [j] [k] == null)
                         {
-                            //Console.WriteLine("test => " + string.Join(" ", labels.Select(l => l.Value)));
-                            int last = -1;
-                            int counter = 0;
-                            foreach(int? val in labels.Select(l => l.Value))
-                            {
-                                if(val != null)
-                                {
-                                    if(last == val)
-                                    {
-                                        counter ++;
-                                    } else
-                                    {
-                                        counter = 0;
-                                    }
-                                    if(counter == 2)
-                                    {
-                                        //Console.WriteLine("test => " + string.Join(" ", labels.Select(l => l.Value)));
-                                        return false;
-                                    }
-                                    last = (int)val;
-                                } else
-                                {
-                                    last = -1;
-                                }
-                            }
-                            return true;
+                            same = false;
                         }
-                        )
-                    //,
-                    //new ListConstraint<int>(
-                    //    labels,
-                    //    labels => !labels.Any(l => l.Value is null)
-                    //    )
-                })); ;
+                        if (lines [i] [k] != lines [j] [k])
+                        {
+                            same = false;
+                        }
+                    }
+                    if (same)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+
+        private static bool WithoutThreeSameNumbers(List<ILabel<int>> line)
+        {
+            int last = -1;
+            int counter = 0;
+            foreach (int? val in line.Select(l => l.Value))
+            {
+                if (val != null)
+                {
+                    if (last == val)
+                    {
+                        counter++;
+                    }
+                    else
+                    {
+                        counter = 0;
+                    }
+                    if (counter == 2)
+                    {
+                        return false;
+                    }
+                    last = (int) val;
+                }
+                else
+                {
+                    last = -1;
+                }
+            }
+            return true;
         }
     }
 }

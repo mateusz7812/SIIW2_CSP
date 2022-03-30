@@ -9,16 +9,30 @@ namespace SSIW2_CSP
 
         static void Main(string [] args)
         {
+            const int dimension = 6;
+            const ProblemType problemType = ProblemType.FUTOSHIKI;
+            Problem<int> problem = new Problem<int>(dimension, problemType);
             List<ILabel<int>> labels = new();
             List <IConstraint> constraints = new();
-            new BinaryDataLoader(6).LoadData(labels, constraints);
-            BacktrackingCrawler<int> crawler = new BacktrackingCrawler<int>();
-            AbstractController<int> controller = new AbstractController<int>(crawler, labels, constraints);
+            switch (problemType)
+            {
+                case ProblemType.BINARY:
+                    new BinaryDataLoader(problem.Dimension).LoadData(labels, constraints);
+                    break;
+                case ProblemType.FUTOSHIKI:
+                    new FutoshikiDataLoader(problem.Dimension).LoadData(labels, constraints);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
+            BacktrackingCrawler<int> crawler = new BacktrackingCrawler<int>(problem);
+            Controller<int> controller = new Controller<int>(crawler, labels, constraints);
             int [] [] solutions = controller.GetSolutions();
             foreach(int[] solution in solutions)
             {
-                Console.WriteLine(string.Join("\n", solution.Select((x, i) => new { Index = i, Value = x })
-                    .GroupBy(x => x.Index / 6)
+                Console.WriteLine("\n" + string.Join("\n", solution.Select((x, i) => new { Index = i, Value = x })
+                    .GroupBy(x => x.Index / problem.Dimension)
                     .Select(x => string.Join(" ", x.Select(l => l.Value)))));
             }
         }
