@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -7,76 +6,88 @@ namespace SSIW2_CSP
 {
     internal class FutoshikiDataLoader : IDataLoader
     {
-        private readonly string file_name;
+        private readonly string _fileName;
 
-        static string path = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+        static readonly string Path = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
         private int Dimension { get; init; }
 
         public FutoshikiDataLoader(int dimension)
         {
-            file_name = $"{path}\\Data\\futoshiki_{dimension}x{dimension}";
-            this.Dimension = dimension;
+            _fileName = $"{Path}\\Data\\futoshiki_{dimension}x{dimension}";
+            Dimension = dimension;
         }
 
         public void LoadData(List<ILabel<int>> labels, List<IConstraint> constraints)
         {
             labels.Clear();
             constraints.Clear();
-            List<List<ILabel<int>>> vertical_lines = new List<List<ILabel<int>>>(Dimension);
-            List<List<ILabel<int>>> horizontal_lines = new List<List<ILabel<int>>>(Dimension);
+            List<List<ILabel<int>>> verticalLines = new List<List<ILabel<int>>>(Dimension);
+            List<List<ILabel<int>>> horizontalLines = new List<List<ILabel<int>>>(Dimension);
 
             for (int i = 0; i < Dimension; i++)
             {
-                horizontal_lines.Add(new List<ILabel<int>>(Dimension));
-                vertical_lines.Add(new List<ILabel<int>>(Dimension));
+                horizontalLines.Add(new List<ILabel<int>>(Dimension));
+                verticalLines.Add(new List<ILabel<int>>(Dimension));
             }
-            string [] text = File.ReadAllText(file_name).Split("\r\n");
+            string [] text = File.ReadAllText(_fileName).Split("\r\n");
+            Variables(labels, verticalLines, horizontalLines, text);
+            VerticalConstraints(constraints, horizontalLines, text);
+            HorizontalConstraints(constraints, horizontalLines, text);
+            LinesConstraints(constraints, verticalLines, horizontalLines);
+        }
+
+        private void Variables(List<ILabel<int>> labels, List<List<ILabel<int>>> verticalLines, List<List<ILabel<int>>> horizontalLines, string [] text)
+        {
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
                 if (i % 2 == 0)
                 {
-                    string [] string_labels = line.Split('-', '<', '>').ToArray();
+                    string [] stringLabels = line.Split('-', '<', '>').ToArray();
                     for (int j = 0; j < Dimension; j++)
                     {
                         IDomain<int> domain;
-                        if (string_labels [j] == "x")
+                        if (stringLabels [j] == "x")
                         {
                             domain = new SetDomain<int>(Enumerable.Range(1, Dimension));
                         }
                         else
                         {
-                            domain = new ConstDomain<int>(int.Parse(string_labels [j]));
+                            domain = new ConstDomain<int>(int.Parse(stringLabels [j]));
                         }
 
                         Label<int> label = new Label<int>(domain);
                         labels.Add(label);
-                        horizontal_lines [i/2].Add(label);
-                        vertical_lines [j].Add(label);
+                        horizontalLines [i / 2].Add(label);
+                        verticalLines [j].Add(label);
                     }
                 }
             }
-            constraints.AddRange(horizontal_lines.Union(vertical_lines).Select(line => new Constraint(() =>
+        }
+
+        private void LinesConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> verticalLines, List<List<ILabel<int>>> horizontalLines)
+        {
+            List<int?> numbers = new(verticalLines[0].Count);
+            constraints.AddRange(horizontalLines.Union(verticalLines).Select(line => new Constraint(() =>
             {
-                List<int> free_numbers = Enumerable.Range(1, Dimension).ToList();
+                numbers.Clear();
                 for (int i = 0; i < Dimension; i++)
                 {
-                    if (line [i].Value != null)
+                    if (line[i].Value == null) continue;
+                    if (numbers.Contains(line [i].Value))
                     {
-                        if (free_numbers.Contains((int) line [i].Value))
-                        {
-                            free_numbers.Remove((int) line [i].Value);
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        return false;
                     }
+
+                    numbers.Add(line [i].Value);
 
                 }
                 return true;
             })));
+        }
 
+        private void VerticalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)
+        {
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -91,9 +102,9 @@ namespace SSIW2_CSP
                             constraints.Add(
                                 new Constraint(
                                     () =>
-                                        (horizontal_lines [(row / 2)] [col].Value ?? int.MinValue)
+                                        (horizontalLines [row / 2] [col].Value ?? int.MinValue)
                                         <
-                                        (horizontal_lines [(row / 2 + 1)] [col].Value ?? int.MaxValue)
+                                        (horizontalLines [row / 2 + 1] [col].Value ?? int.MaxValue)
                                     )
                                 );
                         }
@@ -102,16 +113,19 @@ namespace SSIW2_CSP
                             constraints.Add(
                                 new Constraint(
                                     () =>
-                                        (horizontal_lines [(row / 2)] [col].Value ?? int.MaxValue)
+                                        (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
                                         >
-                                        (horizontal_lines [(row / 2) + 1] [col].Value ?? int.MinValue)
+                                        (horizontalLines [row / 2 + 1] [col].Value ?? int.MinValue)
                                     )
                                 );
                         }
                     }
                 }
             }
+        }
 
+        private static void HorizontalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)
+        {
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -131,9 +145,9 @@ namespace SSIW2_CSP
                             constraints.Add(
                                 new Constraint(
                                     () =>
-                                        (horizontal_lines [row / 2] [col].Value ?? int.MinValue)
+                                        (horizontalLines [row / 2] [col].Value ?? int.MinValue)
                                         <
-                                        (horizontal_lines [row / 2] [col + 1].Value ?? int.MaxValue)
+                                        (horizontalLines [row / 2] [col + 1].Value ?? int.MaxValue)
                                     )
                                 );
                             j++;
@@ -143,9 +157,9 @@ namespace SSIW2_CSP
                             constraints.Add(
                                 new Constraint(
                                     () =>
-                                        (horizontal_lines [row / 2] [col].Value ?? int.MaxValue)
+                                        (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
                                         >
-                                        (horizontal_lines [row / 2] [col + 1].Value ?? int.MinValue)
+                                        (horizontalLines [row / 2] [col + 1].Value ?? int.MinValue)
                                     )
                                 );
                             j++;

@@ -2,6 +2,6 @@
 {
     interface IController<T> where T : struct
     {
-        T [] [] GetSolutions();
+        void FindSolutions();
     }
 }

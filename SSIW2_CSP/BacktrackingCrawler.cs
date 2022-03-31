@@ -38,7 +38,7 @@ namespace SSIW2_CSP
 
         private List<LabelDecorator<T>> Labels { get; set; } = new List<LabelDecorator<T>>();
         public bool HasNext { get; private set; } = true;
-        private int currentLabelIndex = 0;
+        private int _currentLabelIndex = 0;
         private Problem<T> Problem { get; init; }
         public BacktrackingCrawler(Problem<T> problem)
         {
@@ -53,36 +53,36 @@ namespace SSIW2_CSP
                 Labels [i].RenewFreeDomainValues();
                 labels [i] = Labels [i];
             }
-            currentLabelIndex = 0;
+            _currentLabelIndex = 0;
         }
 
         public void SetNext()
         {
-            while (!Labels [currentLabelIndex].HasFreeValues())
+            while (!Labels [_currentLabelIndex].HasFreeValues())
             {
                 SetReturn();
             }
-            Labels [currentLabelIndex].SetNextFreeValue();
-            if (currentLabelIndex < Labels.Count - 1)
+            Labels [_currentLabelIndex].SetNextFreeValue();
+            if (_currentLabelIndex < Labels.Count - 1)
             {
-                currentLabelIndex += 1;
+                _currentLabelIndex += 1;
             }
-            Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new { Index = i, Value = x })
-                .GroupBy(x => x.Index / Problem.Dimension)
-                .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))));
+            //Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new { Index = i, Value = x })
+            //    .GroupBy(x => x.Index / Problem.Dimension)
+            //    .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))) + "\t" + Problem.Solutions.Count);
         }
 
         public void SetReturn()
         {
-            Labels [currentLabelIndex].Value = null;
-            Labels [currentLabelIndex].RenewFreeDomainValues();
-            if (currentLabelIndex == 0)
+            Labels [_currentLabelIndex].Value = null;
+            Labels [_currentLabelIndex].RenewFreeDomainValues();
+            if (_currentLabelIndex == 0)
             {
                 HasNext = false;
             }
             else
             {
-                currentLabelIndex -= 1;
+                _currentLabelIndex -= 1;
             }
         }
     }

@@ -2,7 +2,7 @@
 {
     enum ProblemType
     {
-        BINARY = 0,
-        FUTOSHIKI = 1
+        Binary = 0,
+        Futoshiki = 1
     }
 }

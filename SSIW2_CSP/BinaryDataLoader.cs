@@ -7,12 +7,12 @@ namespace SSIW2_CSP
 {
     class BinaryDataLoader: IDataLoader
     {
-        static string path = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
-        private readonly string file_name;
+        static string _path = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+        private readonly string _fileName;
 
         public BinaryDataLoader(int dimension)
         {
-            file_name = $"{path}\\Data\\binary_{dimension}x{dimension}";
+            _fileName = $"{_path}\\Data\\binary_{dimension}x{dimension}";
             Dimension = dimension;
         }
 
@@ -22,14 +22,14 @@ namespace SSIW2_CSP
         {
             labels.Clear();
             constraints.Clear();
-            List<List<ILabel<int>>> vertical_lines = new List<List<ILabel<int>>>(Dimension);
-            List<List<ILabel<int>>> horizontal_lines = new List<List<ILabel<int>>>(Dimension);
+            List<List<ILabel<int>>> verticalLines = new List<List<ILabel<int>>>(Dimension);
+            List<List<ILabel<int>>> horizontalLines = new List<List<ILabel<int>>>(Dimension);
             for (int i = 0; i < Dimension; i++)
             {
-                vertical_lines.Add(new List<ILabel<int>>(Dimension));
-                horizontal_lines.Add(new List<ILabel<int>>(Dimension));
+                verticalLines.Add(new List<ILabel<int>>(Dimension));
+                horizontalLines.Add(new List<ILabel<int>>(Dimension));
             }
-            string [] text = File.ReadAllText(file_name).Split("\r\n");
+            string [] text = File.ReadAllText(_fileName).Split("\r\n");
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -52,21 +52,22 @@ namespace SSIW2_CSP
                     }
                     ILabel<int> label = new Label<int>(domain);
                     labels.Add(label);
-                    vertical_lines [j].Add(label);
-                    horizontal_lines [i].Add(label);
+                    verticalLines [j].Add(label);
+                    horizontalLines [i].Add(label);
                 }
             }
             constraints.Add(
                 new Constraint(
-                    () => AllLinesDifferent(vertical_lines)));
+                    () => AllLinesDifferent(verticalLines)));
 
             constraints.Add(
                 new Constraint(
-                    () => AllLinesDifferent(horizontal_lines)));
-            constraints.AddRange(vertical_lines.Union(horizontal_lines)
+                    () => AllLinesDifferent(horizontalLines)));
+
+            constraints.AddRange(verticalLines.Union(horizontalLines)
                 .SelectMany(line => new List<IConstraint>() {
                     new Constraint(
-                        () => line.Count(l => l.Value == 1) <= (Dimension / 2) && line.Count(l => l.Value == 0) <= (Dimension / 2)),
+                        () => line.Count(l => l.Value == 1) <= Dimension / 2 && line.Count(l => l.Value == 0) <= Dimension / 2),
                     new Constraint(
                         () => WithoutThreeSameNumbers(line)                        )
                 }));
@@ -74,8 +75,8 @@ namespace SSIW2_CSP
 
         private bool AllLinesDifferent(List<List<ILabel<int>>> lines)
         {
-            int start_index = 0;
-            for (int i = start_index; i < Dimension; i++)
+            int startIndex = 0;
+            for (int i = startIndex; i < Dimension; i++)
             {
                 for (int j = i + 1; j < Dimension; j++)
                 {

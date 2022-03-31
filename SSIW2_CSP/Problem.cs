@@ -1,4 +1,6 @@
-﻿namespace SSIW2_CSP
+﻿using System.Collections.Generic;
+
+namespace SSIW2_CSP
 {
     class Problem<T> where T : struct
     {
@@ -10,6 +12,9 @@
             Type = type;
         }
 
-        ProblemType Type { get; }
+        public List<IConstraint> Constraints { get; init; } = new ();
+        public List<ILabel<T>> Labels { get; init; } = new ();
+        public List<T? []> Solutions { get; init; } = new ();
+        public ProblemType Type { get; }
     }
 }
