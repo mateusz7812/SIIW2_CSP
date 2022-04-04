@@ -9,7 +9,7 @@ namespace SSIW2_CSP
 
         static void Main(string [] args)
         {
-            const int dimension = 6;
+            const int dimension = 4;
             const ProblemType problemType = ProblemType.Futoshiki;
             Problem<int> problem = new Problem<int>(dimension, problemType);
             switch (problemType)
@@ -24,7 +24,8 @@ namespace SSIW2_CSP
                     throw new NotImplementedException();
             }
 
-            BacktrackingCrawler<int> crawler = new BacktrackingCrawler<int>(problem);
+            //BacktrackingCrawler<int> crawler = new BacktrackingCrawler<int>(problem);
+            ForwardCheckingCrawler<int> crawler = new ForwardCheckingCrawler<int>(problem);
             Controller<int> controller = new Controller<int>(crawler, problem);
             controller.FindSolutions();
             foreach(int?[] solution in problem.Solutions)
@@ -33,6 +34,8 @@ namespace SSIW2_CSP
                     .GroupBy(x => x.Index / problem.Dimension)
                     .Select(x => string.Join(" ", x.Select(l => l.Value)))));
             }
+            Console.WriteLine($"Found {problem.Solutions.Count} solutions");
+            Console.WriteLine($"Taking {controller.StepsCounter} steps");
         }
     }
 }

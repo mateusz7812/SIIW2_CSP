@@ -10,10 +10,33 @@ namespace SSIW2_CSP
     {
         public T? Value { get; set; } = null;
         public IDomain<T> Domain { get; }
+        public List<T> FreeDomainValues { get; init; } = new ();
 
         public Label(IDomain<T> domain)
         {
             Domain = domain;
+        }
+        
+        public void SetNextFreeValue()
+        {
+            Value = FreeDomainValues.First();
+            FreeDomainValues.Remove((T) Value);
+        }
+
+        public bool HasFreeValues => FreeDomainValues.Any();
+        public int FreeDomainValuesCount => FreeDomainValues.Count;
+
+        public void RenewFreeDomainValues()
+        {
+            FreeDomainValues.Clear();
+            FreeDomainValues.AddRange(Domain.Values);
+        }
+
+        public List<T> RemoveFromDomain(Func<T?, bool> func)
+        {
+            var result = FreeDomainValues.Where(v => func(v)).ToList();
+            FreeDomainValues.RemoveAll(v => func(v));
+            return result;
         }
     }
 }

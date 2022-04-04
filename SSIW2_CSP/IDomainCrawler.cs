@@ -7,6 +7,6 @@ namespace SSIW2_CSP
         void SetNext();
         bool HasNext { get; }
         void SetReturn();
-        void InitializeLabels(List<ILabel<T>> labels);
+        void Initialize();
     }
 }

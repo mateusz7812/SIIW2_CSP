@@ -9,7 +9,7 @@ namespace SSIW2_CSP
     {
         private IDomainCrawler<T> Crawler { get; }
         private Problem<T> Problem { get; }
-
+        public int StepsCounter { get; set; }
         public Controller(IDomainCrawler<T> crawler, Problem<T> problem)
         {
             Crawler = crawler;
@@ -18,7 +18,8 @@ namespace SSIW2_CSP
 
         public void FindSolutions()
         {
-            Crawler.InitializeLabels(Problem.Labels);
+            StepsCounter = 0;
+            Crawler.Initialize();
             while (Crawler.HasNext)
             {
                 if (Problem.Constraints.All(c => c.IsSatisfied()))
@@ -33,6 +34,7 @@ namespace SSIW2_CSP
                     Crawler.SetReturn();
                 }
                 Crawler.SetNext();
+                StepsCounter++;
             }
         }
     }

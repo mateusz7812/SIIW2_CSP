@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace SSIW2_CSP
 {
@@ -67,23 +68,42 @@ namespace SSIW2_CSP
 
         private void LinesConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> verticalLines, List<List<ILabel<int>>> horizontalLines)
         {
-            List<int?> numbers = new(verticalLines[0].Count);
-            constraints.AddRange(horizontalLines.Union(verticalLines).Select(line => new Constraint(() =>
-            {
-                numbers.Clear();
-                for (int i = 0; i < Dimension; i++)
+//            constraints.AddRange(horizontalLines.Union(verticalLines).Select(line => new DifferentNumbersInLineConstraint(Dimension, line)));
+            constraints.AddRange(horizontalLines.Union(verticalLines)
+                .Select(line =>
                 {
-                    if (line[i].Value == null) continue;
-                    if (numbers.Contains(line [i].Value))
+                    List<int?> _numbers = new List<int?>(Dimension);
+                    return new ConstraintWithDomainChecking<int>(() =>
                     {
-                        return false;
-                    }
+                        _numbers.Clear();
+                        for (int i = 0; i < Dimension; i++)
+                        {
+                            if (line[i].Value == null) continue;
+                            if (_numbers.Contains(line[i].Value))
+                            {
+                                return false;
+                            }
 
-                    numbers.Add(line [i].Value);
+                            _numbers.Add(line[i].Value);
+                        }
 
-                }
-                return true;
-            })));
+                        return true;
+                    },
+                        current =>
+                        {
+                            Dictionary<ILabel<int>, List<int>> removedValues = new();
+                            if (!line.Contains(current)) 
+                                return removedValues;
+                            
+                            for (int i = 0; i < line.Count; i++)
+                            {
+                                if (line[i] != current && line[i].Value is null)
+                                    removedValues[line[i]] = line[i].RemoveFromDomain(v => v == current.Value);
+                            }
+
+                            return removedValues;
+                        });
+                }));
         }
 
         private void VerticalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)

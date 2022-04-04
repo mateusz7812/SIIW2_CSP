@@ -2,7 +2,7 @@
 
 namespace SSIW2_CSP
 {
-    interface IDomain<T>
+    public interface IDomain<T>
     {
         IList<T> Values { get; }
     }

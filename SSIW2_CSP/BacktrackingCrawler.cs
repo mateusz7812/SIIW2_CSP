@@ -6,66 +6,37 @@ namespace SSIW2_CSP
 {
     class BacktrackingCrawler<T> : IDomainCrawler<T> where T : struct
     {
-        class LabelDecorator<T>: ILabel<T> where T : struct
-        {
-            public List<T> FreeDomainValues { get; init; } = new List<T>();
-            private ILabel<T> Label { get; init; }
-            public T? Value { 
-                get => Label.Value; 
-                set => Label.Value = value; 
-            }
-            public IDomain<T> Domain => Label.Domain;
-
-            public LabelDecorator(ILabel<T> label)
-            {
-                Label = label;
-            }
-
-            internal void SetNextFreeValue()
-            {
-                Label.Value = FreeDomainValues.First();
-                FreeDomainValues.Remove((T) Value);
-            }
-
-            internal bool HasFreeValues() => FreeDomainValues.Any();
-
-            internal void RenewFreeDomainValues()
-            {
-                FreeDomainValues.Clear();
-                FreeDomainValues.AddRange(Domain.Values);
-            }
-        }
-
-        private List<LabelDecorator<T>> Labels { get; set; } = new List<LabelDecorator<T>>();
         public bool HasNext { get; private set; } = true;
-        private int _currentLabelIndex = 0;
+        private int _currentLabelIndex;
         private Problem<T> Problem { get; init; }
         public BacktrackingCrawler(Problem<T> problem)
         {
             Problem = problem;
         }
 
-        public void InitializeLabels(List<ILabel<T>> labels)
+        public void Initialize()
         {
-            for (int i = 0; i < labels.Count; i++)
+            for (int i = 0; i < Problem.Labels.Count; i++)
             {
-                Labels.Add(new LabelDecorator<T>(labels [i]));
-                Labels [i].RenewFreeDomainValues();
-                labels [i] = Labels [i];
+                Problem.Labels [i].RenewFreeDomainValues();
             }
             _currentLabelIndex = 0;
         }
 
         public void SetNext()
         {
-            while (!Labels [_currentLabelIndex].HasFreeValues())
+            if (_currentLabelIndex == Problem.Labels.Count)
+            {
+                _currentLabelIndex--;
+            }
+            while (!Problem.Labels [_currentLabelIndex].HasFreeValues)
             {
                 SetReturn();
             }
-            Labels [_currentLabelIndex].SetNextFreeValue();
-            if (_currentLabelIndex < Labels.Count - 1)
+            Problem.Labels [_currentLabelIndex].SetNextFreeValue();
+            if (_currentLabelIndex < Problem.Labels.Count)
             {
-                _currentLabelIndex += 1;
+                _currentLabelIndex++;
             }
             //Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new { Index = i, Value = x })
             //    .GroupBy(x => x.Index / Problem.Dimension)
@@ -74,8 +45,12 @@ namespace SSIW2_CSP
 
         public void SetReturn()
         {
-            Labels [_currentLabelIndex].Value = null;
-            Labels [_currentLabelIndex].RenewFreeDomainValues();
+            if (_currentLabelIndex == Problem.Labels.Count)
+            {
+                return;
+            }
+            Problem.Labels [_currentLabelIndex].Value = null;
+            Problem.Labels [_currentLabelIndex].RenewFreeDomainValues();
             if (_currentLabelIndex == 0)
             {
                 HasNext = false;

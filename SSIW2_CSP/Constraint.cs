@@ -4,18 +4,18 @@ using System.Linq;
 
 namespace SSIW2_CSP
 {
-    class Constraint : IConstraint
+    public class Constraint : IConstraint
     {
-        private readonly Func<bool> _func;
+        private readonly Func<bool> _isSatisfied;
 
-        public Constraint(Func<bool> func)
+        public Constraint(Func<bool> isSatisfied)
         {
-            this._func = func;
+            this._isSatisfied = isSatisfied;
         }
 
         public bool IsSatisfied()
         {
-            return _func.Invoke();
+            return _isSatisfied.Invoke();
         }
     }
 }
