@@ -2,6 +2,7 @@
 using System.Linq;
 using SSIW2_CSP.Constraints;
 using SSIW2_CSP.Labels;
+using SSIW2_CSP.ValueSetters;
 
 namespace SSIW2_CSP.Crawlers
 {
@@ -10,13 +11,16 @@ namespace SSIW2_CSP.Crawlers
         public bool HasNext { get; private set; } = true;
         private int _currentLabelIndex;
         private Problem<T> Problem { get; init; }
-        public BacktrackingCrawler(Problem<T> problem)
+        public IValueSetter<T> ValueSetter { get; }
+
+        public BacktrackingCrawler(Problem<T> problem, IValueSetter<T> valueSetter)
         {
             Problem = problem;
+            ValueSetter = valueSetter;
         }
 
         public IConstraint Constraint { get; private set; }
-        public ILabel<T> LastLabel { get; private set; }
+        public ILabel<T> CurrentLabel { get; private set; }
 
         public void Initialize()
         {
@@ -33,20 +37,17 @@ namespace SSIW2_CSP.Crawlers
                 }
                 return Problem.Labels[_currentLabelIndex].FreeDomainValues.Any();
             });
-            LastLabel = Problem.Labels[0];
+            CurrentLabel = Problem.Labels[0];
         }
 
         public void SetNext()
         {
-            LastLabel = Problem.Labels [_currentLabelIndex];
-            LastLabel.SetNextFreeValue();
+            CurrentLabel = Problem.Labels [_currentLabelIndex];
+            ValueSetter.SetNextFreeValue(CurrentLabel);
             if (_currentLabelIndex < Problem.Labels.Count)
             {
                 _currentLabelIndex++;
             }
-            //Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new { Index = i, Value = x })
-            //    .GroupBy(x => x.Index / Problem.Dimension)
-            //    .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))) + "\t" + Problem.Solutions.Count);
         }
 
         public void SetReturn()
@@ -74,12 +75,6 @@ namespace SSIW2_CSP.Crawlers
         {
             label.FreeDomainValues.Clear();
             label.FreeDomainValues.AddRange(label.Domain.Values);
-        }
-        
-        public static void SetNextFreeValue<T>(this ILabel<T> label) where T: struct
-        {
-            label.Value = label.FreeDomainValues.First();
-            label.FreeDomainValues.Remove((T) label.Value);
         }
     }
 }

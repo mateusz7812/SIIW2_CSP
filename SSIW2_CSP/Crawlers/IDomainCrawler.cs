@@ -10,6 +10,6 @@ namespace SSIW2_CSP.Crawlers
         void SetReturn();
         void Initialize();
         IConstraint Constraint { get; }
-        ILabel<T> LastLabel { get; }
+        ILabel<T> CurrentLabel { get; }
     }
 }

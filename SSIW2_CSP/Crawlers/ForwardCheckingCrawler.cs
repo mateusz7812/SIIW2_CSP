@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SSIW2_CSP.Constraints;
 using SSIW2_CSP.Labels;
+using SSIW2_CSP.ValueSetters;
 
 namespace SSIW2_CSP.Crawlers
 {
@@ -12,13 +13,16 @@ namespace SSIW2_CSP.Crawlers
         public bool HasNext { get; private set; } = true;
         private int _currentLabelIndex;
         private Problem<T> Problem { get; init; }
-        public ForwardCheckingCrawler(Problem<T> problem)
+        public IValueSetter<T> ValueSetter { get; }
+
+        public ForwardCheckingCrawler(Problem<T> problem, IValueSetter<T> valueSetter)
         {
             Problem = problem;
+            ValueSetter = valueSetter;
         }
 
         public IConstraint Constraint { get; private set; }
-        public ILabel<T> LastLabel { get; private set; }
+        public ILabel<T> CurrentLabel { get; private set; }
 
         public void Initialize()
         {
@@ -38,41 +42,25 @@ namespace SSIW2_CSP.Crawlers
                     }
                     return Labels.Skip(_currentLabelIndex).All(l => l.FreeDomainValues.Any<T>());
                 });
-            LastLabel = Problem.Labels[0];
+            CurrentLabel = Problem.Labels[0];
         }
 
 
         public void SetNext()
         {
-            LastLabel = Problem.Labels [_currentLabelIndex];
-            LastLabel.SetNextFreeValue();
-            //WriteValues();
+            CurrentLabel = Problem.Labels [_currentLabelIndex];
+            ValueSetter.SetNextFreeValue(CurrentLabel);
             RemoveAssignedValueFromVariableDomain();
             RemoveValuesThatNotSatisfiesConstraints();
-            //WriteFreeDomainValuesCount();
             if (_currentLabelIndex < Labels.Count)
             {
                 _currentLabelIndex++;
             }
         }
-
-        private void WriteFreeDomainValuesCount()
-        {
-            Console.WriteLine(string.Join("  ", Problem.Labels.Select((x, i) => new {Index = i, Value = x})
-                .GroupBy(x => x.Index / Problem.Dimension)
-                .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))) + "\t" + Problem.Solutions.Count);
-        }
-
-        private void WriteValues()
-        {
-            Console.WriteLine(string.Join("  ", Problem.Labels.Select((x, i) => new {Index = i, Value = x})
-                .GroupBy(x => x.Index / Problem.Dimension)
-                .Select(x => string.Join(" ", x.Select(l => l.Value.Value)))) + "\t" + Problem.Solutions.Count);
-        }
-
+        
         private void RemoveValuesThatNotSatisfiesConstraints()
         {
-            foreach (var constraint in LastLabel.Constraints.OfType<ConstraintWithDomainChecking<T>>())
+            foreach (var constraint in CurrentLabel.Constraints.OfType<ConstraintWithDomainChecking<T>>())
             {
                 var dict = constraint.RemoveWrongValuesFromDomain.Invoke(Labels[_currentLabelIndex].Label);
                 foreach (var pair in dict)
@@ -105,7 +93,6 @@ namespace SSIW2_CSP.Crawlers
                 return;
             }
             
-            //Console.WriteLine("return");
             Labels [_currentLabelIndex].Value = null;
             if (Labels[_currentLabelIndex].RemovedValues.ContainsKey(Labels[_currentLabelIndex].ID))
             {
@@ -128,12 +115,6 @@ namespace SSIW2_CSP.Crawlers
                     Labels[i].FreeDomainValues.AddRange(Labels[_currentLabelIndex].RemovedValues[i]);
                     Labels[_currentLabelIndex].RemovedValues[i].Clear();
                 }
-            //WriteValues();
-            //WriteFreeDomainValuesCount();
-            //if (Labels[_currentLabelIndex].FreeDomainValuesCount == 1)
-            //{
-            //    SetReturn();
-            //}
         }
     }
 }
