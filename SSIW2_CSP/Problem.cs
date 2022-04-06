@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using SSIW2_CSP.Constraints;
+using SSIW2_CSP.LabelOrderStrategies;
+using SSIW2_CSP.Labels;
 
 namespace SSIW2_CSP
 {
@@ -6,15 +9,21 @@ namespace SSIW2_CSP
     {
         public int Dimension { get; }
 
-        public Problem(int dimension, ProblemType type)
+        public Problem(int dimension, ProblemType problemType, CrawlerType crawlerType,
+            LabelOrderStrategyType labelOrderStrategyType)
         {
             Dimension = dimension;
-            Type = type;
+            ProblemType = problemType;
+            CrawlerType = crawlerType;
+            LabelOrderStrategyType = labelOrderStrategyType;
         }
 
         public List<IConstraint> Constraints { get; init; } = new ();
-        public List<ILabel<T>> Labels { get; init; } = new ();
+        public List<ILabel<T>> Labels { get; set; } = new ();
         public List<T? []> Solutions { get; init; } = new ();
-        public ProblemType Type { get; }
+        public ProblemType ProblemType { get; }
+        public CrawlerType CrawlerType { get; }
+        public LabelOrderStrategyType LabelOrderStrategyType { get; }
+        public List<ILabel<T>> NotOrderedLabels { get; set; }
     }
 }

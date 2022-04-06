@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Constraints
 {
     public class Constraint : IConstraint
     {

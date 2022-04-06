@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using SSIW2_CSP.Labels;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Constraints
 {
     class DifferentNumbersInLineConstraint : IConstraint
     {

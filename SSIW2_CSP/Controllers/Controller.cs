@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+﻿using System.Linq;
+using SSIW2_CSP.Crawlers;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Controllers
 {
     class Controller<T> : IController<T> where T : struct
     {
@@ -22,17 +20,24 @@ namespace SSIW2_CSP
             Crawler.Initialize();
             while (Crawler.HasNext)
             {
-                if (Problem.Constraints.All(c => c.IsSatisfied()))
+                if (Crawler.LastLabel.Constraints.All(c => c.IsSatisfied()) 
+                    && Problem.Constraints.All(c => c.IsSatisfied()))
                 {
                     if (!Problem.Labels.Any(l => l.Value is null))
                     {
-                        Problem.Solutions.Add(Problem.Labels.Select(l => l.Value).ToArray());
+                        Problem.Solutions.Add(Problem.NotOrderedLabels.Select(l => l.Value).ToArray());
                     }
                 }
                 else
                 {
                     Crawler.SetReturn();
                 }
+
+                while (!Crawler.Constraint.IsSatisfied())
+                {
+                    Crawler.SetReturn();
+                }
+                
                 Crawler.SetNext();
                 StepsCounter++;
             }

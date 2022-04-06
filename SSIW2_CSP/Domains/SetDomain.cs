@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Domains
 {
     class SetDomain<T> : IDomain<T>, IEnumerable<T>
     {

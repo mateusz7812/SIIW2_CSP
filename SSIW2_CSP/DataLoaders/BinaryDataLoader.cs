@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SSIW2_CSP.Constraints;
+using SSIW2_CSP.Domains;
+using SSIW2_CSP.Labels;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.DataLoaders
 {
     class BinaryDataLoader: IDataLoader
     {
@@ -21,7 +23,6 @@ namespace SSIW2_CSP
         public void LoadData(List<ILabel<int>> labels, List<IConstraint> constraints)
         {
             labels.Clear();
-            constraints.Clear();
             List<List<ILabel<int>>> verticalLines = new List<List<ILabel<int>>>(Dimension);
             List<List<ILabel<int>>> horizontalLines = new List<List<ILabel<int>>>(Dimension);
             for (int i = 0; i < Dimension; i++)
@@ -64,13 +65,19 @@ namespace SSIW2_CSP
                 new Constraint(
                     () => AllLinesDifferent(horizontalLines)));
 
-            constraints.AddRange(verticalLines.Union(horizontalLines)
-                .SelectMany(line => new List<IConstraint>() {
-                    new Constraint(
-                        () => line.Count(l => l.Value == 1) <= Dimension / 2 && line.Count(l => l.Value == 0) <= Dimension / 2),
-                    new Constraint(
-                        () => WithoutThreeSameNumbers(line)                        )
-                }));
+            verticalLines.Union(horizontalLines)
+                .ToList().ForEach(line =>
+                {
+                    var constraint = new List<IConstraint>()
+                    {
+                        new Constraint(
+                            () => line.Count(l => l.Value == 1) <= Dimension / 2 &&
+                                  line.Count(l => l.Value == 0) <= Dimension / 2),
+                        new Constraint(
+                            () => WithoutThreeSameNumbers(line))
+                    };
+                    line.ForEach(label => label.Constraints.AddRange(constraint));
+                });
         }
 
         private bool AllLinesDifferent(List<List<ILabel<int>>> lines)

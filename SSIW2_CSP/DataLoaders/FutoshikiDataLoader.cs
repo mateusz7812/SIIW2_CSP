@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using SSIW2_CSP.Constraints;
+using SSIW2_CSP.Domains;
+using SSIW2_CSP.Labels;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.DataLoaders
 {
     internal class FutoshikiDataLoader : IDataLoader
     {
@@ -39,6 +42,7 @@ namespace SSIW2_CSP
 
         private void Variables(List<ILabel<int>> labels, List<List<ILabel<int>>> verticalLines, List<List<ILabel<int>>> horizontalLines, string [] text)
         {
+            int labelIdCounter = 0;
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -57,10 +61,12 @@ namespace SSIW2_CSP
                             domain = new ConstDomain<int>(int.Parse(stringLabels [j]));
                         }
 
-                        Label<int> label = new Label<int>(domain);
+                        LabelWithDeletedValues<int> label = new LabelWithDeletedValues<int>(new Label<int>(domain), labelIdCounter);
                         labels.Add(label);
                         horizontalLines [i / 2].Add(label);
                         verticalLines [j].Add(label);
+
+                        labelIdCounter++;
                     }
                 }
             }
@@ -68,46 +74,49 @@ namespace SSIW2_CSP
 
         private void LinesConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> verticalLines, List<List<ILabel<int>>> horizontalLines)
         {
-//            constraints.AddRange(horizontalLines.Union(verticalLines).Select(line => new DifferentNumbersInLineConstraint(Dimension, line)));
-            constraints.AddRange(horizontalLines.Union(verticalLines)
-                .Select(line =>
+            horizontalLines.Union(verticalLines)
+                .ToList().ForEach(line =>
                 {
-                    List<int?> _numbers = new List<int?>(Dimension);
-                    return new ConstraintWithDomainChecking<int>(() =>
+                    List<int?> numbers = new List<int?>(Dimension);
+                    Dictionary<int, List<int>> removedValues = new();
+                    var constraint = new ConstraintWithDomainChecking<int>(() =>
                     {
-                        _numbers.Clear();
+                        numbers.Clear();
                         for (int i = 0; i < Dimension; i++)
                         {
                             if (line[i].Value == null) continue;
-                            if (_numbers.Contains(line[i].Value))
+                            if (numbers.Contains(line[i].Value))
                             {
                                 return false;
                             }
 
-                            _numbers.Add(line[i].Value);
+                            numbers.Add(line[i].Value);
                         }
 
                         return true;
                     },
                         current =>
                         {
-                            Dictionary<ILabel<int>, List<int>> removedValues = new();
+                            removedValues.Clear();
                             if (!line.Contains(current)) 
                                 return removedValues;
                             
-                            for (int i = 0; i < line.Count; i++)
+                            foreach (var l in line)
                             {
-                                if (line[i] != current && line[i].Value is null)
-                                    removedValues[line[i]] = line[i].RemoveFromDomain(v => v == current.Value);
+                                if (l == current || l.Value is not null) continue;
+                                if(l is LabelWithDeletedValues<int> label)
+                                    removedValues[label.ID] = l.RemoveFromDomain(v => v == current.Value);
                             }
 
                             return removedValues;
                         });
-                }));
+                    line.ForEach(label => label.Constraints.Add(constraint));
+                });
         }
 
         private void VerticalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)
         {
+            //Dictionary<ILabel<int>, List<int>> removedValues = new();
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -119,25 +128,34 @@ namespace SSIW2_CSP
                         int col = j;
                         if (line [j] == '<')
                         {
-                            constraints.Add(
-                                new Constraint(
+                            var constraint = new Constraint(
                                     () =>
-                                        (horizontalLines [row / 2] [col].Value ?? int.MinValue)
+                                        (horizontalLines[row / 2][col].Value ?? int.MinValue)
                                         <
-                                        (horizontalLines [row / 2 + 1] [col].Value ?? int.MaxValue)
-                                    )
-                                );
+                                        (horizontalLines[row / 2 + 1][col].Value ?? int.MaxValue)
+                                        );
+                            horizontalLines[row / 2][col].Constraints.Add(constraint);
+                            horizontalLines[row / 2 + 1][col].Constraints.Add(constraint);
+                            //      , (label) =>
+                            //  {
+                            //      removedValues.Clear();
+                            //      if (label == horizontalLines[row / 2][col])
+                            //      {
+                            //          
+                            //      }
+                            //  }
+                            //      ));
                         }
                         else if (line [j] == '>')
                         {
-                            constraints.Add(
-                                new Constraint(
+                            var constraint = new Constraint(
                                     () =>
                                         (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
                                         >
                                         (horizontalLines [row / 2 + 1] [col].Value ?? int.MinValue)
-                                    )
-                                );
+                                    );
+                            horizontalLines[row / 2][col].Constraints.Add(constraint);
+                            horizontalLines[row / 2 + 1][col].Constraints.Add(constraint);
                         }
                     }
                 }
@@ -162,32 +180,55 @@ namespace SSIW2_CSP
                         }
                         else if (c == '<')
                         {
-                            constraints.Add(
-                                new Constraint(
+                            var constraint = new Constraint(
                                     () =>
                                         (horizontalLines [row / 2] [col].Value ?? int.MinValue)
                                         <
                                         (horizontalLines [row / 2] [col + 1].Value ?? int.MaxValue)
-                                    )
-                                );
+                                    );
+                            horizontalLines[row / 2][col].Constraints.Add(constraint);
+                            horizontalLines[row / 2 ][col + 1].Constraints.Add(constraint);
                             j++;
                         }
                         else if (c == '>')
                         {
-                            constraints.Add(
+                            var constraint = 
                                 new Constraint(
                                     () =>
                                         (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
                                         >
                                         (horizontalLines [row / 2] [col + 1].Value ?? int.MinValue)
-                                    )
-                                );
+                                    );
+                            horizontalLines[row / 2][col].Constraints.Add(constraint);
+                            horizontalLines[row / 2 ][col + 1].Constraints.Add(constraint);
                             j++;
                         }
 
                     }
                 }
             }
+        }
+    }
+
+    public static class ExtensionMethodsFutoshiki
+    {
+        public static List<T> RemoveFromDomain<T>(this ILabel<T> label, Func<T?, bool> func) where T:struct
+        {
+            List<T> list = new();
+            int max = label.FreeDomainValues.Count;
+            
+            for (int i = 0; i < max; i++)
+            {
+                if (func(label.FreeDomainValues[i]))
+                {
+                    list.Add(label.FreeDomainValues[i]);
+                    label.FreeDomainValues.RemoveAt(i);
+                    max--;
+                }
+            }
+            //var result = label.FreeDomainValues.Where(v => func(v)).ToList();
+            //label.FreeDomainValues.RemoveAll(v => func(v));
+            return list;
         }
     }
 }

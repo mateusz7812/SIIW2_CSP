@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Domains
 {
     class ConstDomain<T> : IDomain<T>
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SSIW2_CSP
+namespace SSIW2_CSP.Domains
 {
     public interface IDomain<T>
     {
