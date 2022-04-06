@@ -1,6 +1,6 @@
-﻿namespace SSIW2_CSP
+﻿namespace SSIW2_CSP.Crawlers
 {
-    enum CrawlerType
+    public enum CrawlerType
     {
         Backtracking = 0,
         ForwardChecking = 1

@@ -1,4 +1,4 @@
-﻿namespace SSIW2_CSP
+﻿namespace SSIW2_CSP.LabelOrderStrategies
 {
     public enum LabelOrderStrategyType
     {

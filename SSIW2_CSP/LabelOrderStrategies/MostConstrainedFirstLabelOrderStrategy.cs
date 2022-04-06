@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using SSIW2_CSP.LabelOrderStrategies;
+using SSIW2_CSP.Labels;
 
-namespace SSIW2_CSP.Labels
+namespace SSIW2_CSP.LabelOrderStrategies
 {
     public class MostConstrainedFirstLabelOrderStrategy<T> : ILabelOrderStrategy<T> where T:struct
     {
