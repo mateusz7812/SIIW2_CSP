@@ -25,6 +25,10 @@ namespace SSIW2_CSP.Controllers
 
         public void FindSolutions()
         {
+            Console.WriteLine("{0, 4} {1, 8} {2, 8} {3, 8} {4, 10} {5, 10} {6, 10}",
+                "Id",
+                "d[ms]", "d[steps]", "d[rets]",
+                "ms", "steps", "returns");
             StepsCounter = 0;
             LastStepsCounter = 0;
             ReturnsCounter = 0;
@@ -48,6 +52,8 @@ namespace SSIW2_CSP.Controllers
                                     ReturnsCounter - LastReturnsCounter,
                                     Stopwatch.ElapsedMilliseconds,
                                     Stopwatch.ElapsedMilliseconds - LastMillisecondsCounter));
+                        PrintSolution(Problem.Solutions.Count - 1, Problem.Solutions.Last());
+
                         LastStepsCounter = StepsCounter;
                         LastReturnsCounter = ReturnsCounter;
                         LastMillisecondsCounter = Stopwatch.ElapsedMilliseconds;
@@ -74,27 +80,33 @@ namespace SSIW2_CSP.Controllers
 
         public void PrintResult()
         {
-            for (var index = 0; index < Problem.Solutions.Count; index++)
+            /*for (var index = 0; index < Problem.Solutions.Count; index++)
             {
                 var solution = Problem.Solutions[index];
-                Console.WriteLine("{0, 4} {1, 5} {2, 8} {3, 8} {4, 10} {5, 10} {6, 10}",
-                    index + 1, 
-                    solution.MillisecondsFromLast, solution.StepsCounterFromLast, solution.ReturnsCounterFromLast, 
-                    solution.CurrentMilliseconds, solution.CurrentStepsNumber, solution.CurrentReturnsNumber);
+                PrintSolution(index, solution);
                 //Console.WriteLine(string.Join("\n", solution.Labels.Select((x, i) => new { Index = i, Value = x })
                 //    .GroupBy(x => x.Index / Problem.Dimension)
                 //    .Select(x => string.Join(" ", x.Select(l => l.Value)))));
-            }
+            }*/
 
             Console.WriteLine();
             Console.WriteLine($"ProblemType \t\t{Problem.ProblemType}");
+            Console.WriteLine("Problem dimension\t{0,20}", Problem.Dimension);
             Console.WriteLine($"CrawlerType \t\t{Problem.CrawlerType}");
             Console.WriteLine($"LabelOrderStrategyType \t{Problem.LabelOrderStrategyType}");
             Console.WriteLine($"ValueOrderStrategyType \t{Problem.ValueOrderStrategyType}");
-            Console.WriteLine($"Found solutions \t{Problem.Solutions.Count}");
-            Console.WriteLine($"Taking steps \t\t{StepsCounter} ");
-            Console.WriteLine($"Taking returns \t\t{ReturnsCounter} ");
-            Console.WriteLine($"Elapsed milliseconds \t\t{Stopwatch.ElapsedMilliseconds} ");
+            Console.WriteLine("Found solutions \t{0,20}", Problem.Solutions.Count);
+            Console.WriteLine("Taking steps \t\t{0,20}", StepsCounter);
+            Console.WriteLine("Taking returns \t\t{0,20}", ReturnsCounter);
+            Console.WriteLine("Elapsed milliseconds \t{0,20}", Stopwatch.ElapsedMilliseconds);
+        }
+
+        private static void PrintSolution(int index, Solution<T> solution)
+        {
+            Console.WriteLine("{0, 4} {1, 8} {2, 8} {3, 8} {4, 10} {5, 10} {6, 10}",
+                index + 1,
+                solution.MillisecondsFromLast, solution.StepsCounterFromLast, solution.ReturnsCounterFromLast,
+                solution.CurrentMilliseconds, solution.CurrentStepsNumber, solution.CurrentReturnsNumber);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace SSIW2_CSP.Labels
 {
     public class LabelWithDeletedValues<T>: ILabel<T> where T: struct
     {
-        public int ID { get; private init; }
+        public int ID { get; set; }
         public ILabel<T> Label { get; }
             
         public T? Value

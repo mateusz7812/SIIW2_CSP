@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using SSIW2_CSP.Constraints;
 using SSIW2_CSP.Domains;
 using SSIW2_CSP.Labels;
@@ -116,7 +117,8 @@ namespace SSIW2_CSP.DataLoaders
 
         private void VerticalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)
         {
-            //Dictionary<ILabel<int>, List<int>> removedValues = new();
+            Dictionary<int, List<int>> removedValues = new();
+
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -126,36 +128,86 @@ namespace SSIW2_CSP.DataLoaders
                     {
                         int row = i;
                         int col = j;
+                        var first = horizontalLines[row / 2][col];
+                        var second = horizontalLines[row / 2 + 1][col];
                         if (line [j] == '<')
                         {
-                            var constraint = new Constraint(
-                                    () =>
-                                        (horizontalLines[row / 2][col].Value ?? int.MinValue)
-                                        <
-                                        (horizontalLines[row / 2 + 1][col].Value ?? int.MaxValue)
-                                        );
-                            horizontalLines[row / 2][col].Constraints.Add(constraint);
-                            horizontalLines[row / 2 + 1][col].Constraints.Add(constraint);
-                            //      , (label) =>
-                            //  {
-                            //      removedValues.Clear();
-                            //      if (label == horizontalLines[row / 2][col])
-                            //      {
-                            //          
-                            //      }
-                            //  }
-                            //      ));
+                            first.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                    (first.Value ?? int.MinValue)
+                                    <
+                                    (second.Value ?? int.MaxValue)
+                                ,current =>
+                                {
+                                    removedValues.Clear();
+                                    if (current != first)
+                                        throw new TargetException();
+
+                                    if (second.Value is null)
+                                    {
+                                        if (second is LabelWithDeletedValues<int> label)
+                                            removedValues[label.ID] = label.RemoveFromDomain(val => first.Value >= val);
+                                    }
+
+                                    return removedValues;
+                                }));
+                            second.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                    (first.Value ?? int.MinValue)
+                                    <
+                                    (second.Value ?? int.MaxValue)
+                                ,current =>
+                                {
+                                    removedValues.Clear();
+                                    if (current != second)
+                                        throw new TargetException();
+
+                                    if (first.Value is null)
+                                    {
+                                        if (first is LabelWithDeletedValues<int> label)
+                                            removedValues[label.ID] = label.RemoveFromDomain(val => second.Value <= val);
+                                    }
+
+                                    return removedValues;
+                                }));
                         }
                         else if (line [j] == '>')
                         {
-                            var constraint = new Constraint(
-                                    () =>
-                                        (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
-                                        >
-                                        (horizontalLines [row / 2 + 1] [col].Value ?? int.MinValue)
-                                    );
-                            horizontalLines[row / 2][col].Constraints.Add(constraint);
-                            horizontalLines[row / 2 + 1][col].Constraints.Add(constraint);
+                            first.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                    (first.Value ?? int.MaxValue)
+                                    >
+                                    (second.Value ?? int.MinValue)
+                                ,current =>
+                                {
+                                    removedValues.Clear();
+                                    if (current != first)
+                                        throw new TargetException();
+
+                                    if (second.Value is null)
+                                    {
+                                        if (second is LabelWithDeletedValues<int> label)
+                                            removedValues[label.ID] = label.RemoveFromDomain(val => first.Value <= val);
+                                    }
+
+                                    return removedValues;
+                                }));
+                            
+                            second.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                    (first.Value ?? int.MaxValue)
+                                    >
+                                    (second.Value ?? int.MinValue)
+                                ,current =>
+                                {
+                                    removedValues.Clear();
+                                    if (current != second)
+                                        throw new TargetException();
+
+                                    if (first.Value is null)
+                                    {
+                                        if (first is LabelWithDeletedValues<int> label)
+                                            removedValues[label.ID] = label.RemoveFromDomain(val => second.Value >= val);
+                                    }
+
+                                    return removedValues;
+                                }));
                         }
                     }
                 }
@@ -164,6 +216,8 @@ namespace SSIW2_CSP.DataLoaders
 
         private static void HorizontalConstraints(List<IConstraint> constraints, List<List<ILabel<int>>> horizontalLines, string [] text)
         {
+            Dictionary<int, List<int>> removedValues = new();
+
             for (int i = 0; i < text.Length; i++)
             {
                 string line = text [i];
@@ -172,38 +226,100 @@ namespace SSIW2_CSP.DataLoaders
                     int j = 0;
                     foreach (char c in line)
                     {
+                        if(c == 'x')
+                            continue;
                         int row = i;
                         int col = j;
                         if (c == '-')
                         {
                             j++;
                         }
-                        else if (c == '<')
+                        else
                         {
-                            var constraint = new Constraint(
-                                    () =>
-                                        (horizontalLines [row / 2] [col].Value ?? int.MinValue)
+                            var first = horizontalLines [row / 2] [col];
+                            var second = horizontalLines [row / 2] [col + 1];
+                            if (c == '<')
+                            {
+                                first.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                        (first.Value ?? int.MinValue)
                                         <
-                                        (horizontalLines [row / 2] [col + 1].Value ?? int.MaxValue)
-                                    );
-                            horizontalLines[row / 2][col].Constraints.Add(constraint);
-                            horizontalLines[row / 2 ][col + 1].Constraints.Add(constraint);
-                            j++;
-                        }
-                        else if (c == '>')
-                        {
-                            var constraint = 
-                                new Constraint(
-                                    () =>
-                                        (horizontalLines [row / 2] [col].Value ?? int.MaxValue)
-                                        >
-                                        (horizontalLines [row / 2] [col + 1].Value ?? int.MinValue)
-                                    );
-                            horizontalLines[row / 2][col].Constraints.Add(constraint);
-                            horizontalLines[row / 2 ][col + 1].Constraints.Add(constraint);
-                            j++;
-                        }
+                                        (second.Value ?? int.MaxValue)
+                                    ,current =>
+                                    {
+                                        removedValues.Clear();
+                                        if (current != first)
+                                            throw new TargetException();
 
+                                        if (second.Value is null)
+                                        {
+                                            if (second is LabelWithDeletedValues<int> label)
+                                                removedValues[label.ID] = label.RemoveFromDomain(val => first.Value >= val);
+                                        }
+
+                                        return removedValues;
+                                    }));
+                                second.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                        (first.Value ?? int.MinValue)
+                                        <
+                                        (second.Value ?? int.MaxValue)
+                                    ,current =>
+                                    {
+                                        removedValues.Clear();
+                                        if (current != second)
+                                            throw new TargetException();
+
+                                        if (first.Value is null)
+                                        {
+                                            if (first is LabelWithDeletedValues<int> label)
+                                                removedValues[label.ID] = label.RemoveFromDomain(val => second.Value <= val);
+                                        }
+
+                                        return removedValues;
+                                    }));
+                                j++;
+                            }
+                            else if (c == '>')
+                            {
+                                first.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                        (first.Value ?? int.MaxValue)
+                                        >
+                                        (second.Value ?? int.MinValue)
+                                    ,current =>
+                                    {
+                                        removedValues.Clear();
+                                        if (current != first)
+                                            throw new TargetException();
+
+                                        if (second.Value is null)
+                                        {
+                                            if (second is LabelWithDeletedValues<int> label)
+                                                removedValues[label.ID] = label.RemoveFromDomain(val => first.Value <= val);
+                                        }
+
+                                        return removedValues;
+                                    }));
+                            
+                                second.Constraints.Add(new ConstraintWithDomainChecking<int>(() =>
+                                        (first.Value ?? int.MaxValue)
+                                        >
+                                        (second.Value ?? int.MinValue)
+                                    ,current =>
+                                    {
+                                        removedValues.Clear();
+                                        if (current != second)
+                                            throw new TargetException();
+
+                                        if (first.Value is null)
+                                        {
+                                            if (first is LabelWithDeletedValues<int> label)
+                                                removedValues[label.ID] = label.RemoveFromDomain(val => second.Value >= val);
+                                        }
+
+                                        return removedValues;
+                                    }));
+                                j++;
+                            }
+                        }
                     }
                 }
             }

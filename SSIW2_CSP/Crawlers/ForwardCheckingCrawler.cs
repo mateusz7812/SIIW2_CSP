@@ -30,7 +30,8 @@ namespace SSIW2_CSP.Crawlers
             for (int i = 0; i < Problem.Labels.Count; i++)
             {
                 Problem.Labels [i].RenewFreeDomainValues();
-                Labels.Add(new LabelWithDeletedValues<T>(Problem.Labels [i], i));
+                Labels.Add((LabelWithDeletedValues<T>) Problem.Labels [i]);
+                Labels[i].ID = i;
             }
             _currentLabelIndex = 0;
             Constraint =
@@ -42,16 +43,20 @@ namespace SSIW2_CSP.Crawlers
                     }
                     return Labels.Skip(_currentLabelIndex).All(l => l.FreeDomainValues.Any<T>());
                 });
-            CurrentLabel = Problem.Labels[0];
+            CurrentLabel = Labels[0];
         }
 
 
         public void SetNext()
         {
-            CurrentLabel = Problem.Labels [_currentLabelIndex];
+            CurrentLabel = Labels [_currentLabelIndex];
             ValueSetter.SetNextFreeValue(CurrentLabel);
             RemoveAssignedValueFromVariableDomain();
             RemoveValuesThatNotSatisfiesConstraints();
+            Problem.WriteValues();
+            Problem.WriteFreeDomainValuesCount();
+            WriteDeletedDomainValueCount();
+            //Console.WriteLine();
             if (_currentLabelIndex < Labels.Count)
             {
                 _currentLabelIndex++;
@@ -62,7 +67,7 @@ namespace SSIW2_CSP.Crawlers
         {
             foreach (var constraint in CurrentLabel.Constraints.OfType<ConstraintWithDomainChecking<T>>())
             {
-                var dict = constraint.RemoveWrongValuesFromDomain.Invoke(Labels[_currentLabelIndex].Label);
+                Dictionary<int,List<T>> dict = constraint.RemoveWrongValuesFromDomain.Invoke(Labels[_currentLabelIndex]);
                 foreach (var pair in dict)
                 {
                     if (!Labels[_currentLabelIndex].RemovedValues.ContainsKey(pair.Key))
@@ -77,23 +82,32 @@ namespace SSIW2_CSP.Crawlers
 
         private void RemoveAssignedValueFromVariableDomain()
         {
-            if (!Labels[_currentLabelIndex].RemovedValues.ContainsKey(Labels[_currentLabelIndex].ID))
+            var removedValues = Labels[_currentLabelIndex].RemovedValues;
+            if (!removedValues.ContainsKey(Labels[_currentLabelIndex].ID))
             {
-                Labels[_currentLabelIndex].RemovedValues.Add(Labels[_currentLabelIndex].ID, new List<T>());
+                removedValues.Add(Labels[_currentLabelIndex].ID, new List<T>());
             }
 
-            Labels[_currentLabelIndex].RemovedValues[Labels[_currentLabelIndex].ID]
+            removedValues[Labels[_currentLabelIndex].ID]
                 .Add((T) Labels[_currentLabelIndex].Value);
         }
 
         public void SetReturn()
         {
-            if (_currentLabelIndex == Problem.Labels.Count)
+            if (_currentLabelIndex == Labels.Count)
             {
                 return;
             }
             
+            //Console.WriteLine("return");
+            //Problem.WriteValues();
+            
             Labels [_currentLabelIndex].Value = null;
+            
+            //Problem.WriteValues();
+            Problem.WriteFreeDomainValuesCount();
+            WriteDeletedDomainValueCount();
+            
             if (Labels[_currentLabelIndex].RemovedValues.ContainsKey(Labels[_currentLabelIndex].ID))
             {
                 Labels[_currentLabelIndex].FreeDomainValues.AddRange(Labels[_currentLabelIndex].RemovedValues[Labels[_currentLabelIndex].ID]);
@@ -108,13 +122,31 @@ namespace SSIW2_CSP.Crawlers
             {
                 _currentLabelIndex -= 1;
             }
-            
+            Problem.WriteFreeDomainValuesCount();
+            WriteDeletedDomainValueCount();
+
             for(int i = 0; i < Labels.Count;i++)
+            {
                 if (_currentLabelIndex != i && Labels[_currentLabelIndex].RemovedValues.ContainsKey(i))
                 {
-                    Labels[i].FreeDomainValues.AddRange(Labels[_currentLabelIndex].RemovedValues[i]);
-                    Labels[_currentLabelIndex].RemovedValues[i].Clear();
+                    var freeDomainValues = Labels[i].FreeDomainValues;
+                    var removedValue = Labels[_currentLabelIndex].RemovedValues[i];
+                    freeDomainValues.AddRange(removedValue);
+                    removedValue.Clear();
                 }
+            }
+            
+            //Problem.WriteFreeDomainValuesCount();
+            Problem.WriteFreeDomainValuesCount();
+            WriteDeletedDomainValueCount();
+        }
+
+        private void WriteDeletedDomainValueCount()
+        {
+            if(Problem.Debug)
+                Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new {Index = i, Value = x})
+                    .GroupBy(x => x.Index / Problem.Dimension)
+                    .Select(x => string.Join(" ", x.Select(l => l.Value.RemovedValues.Values.Sum(v => v.Count))))));
         }
     }
 }

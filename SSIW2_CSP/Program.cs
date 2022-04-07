@@ -21,12 +21,11 @@ namespace SSIW2_CSP
                 ProblemType.Futoshiki, 
                 CrawlerType.ForwardChecking, 
                 LabelOrderStrategyType.MostConstrainedFirst, 
-                ValueOrderStrategyType.Random);
+                ValueOrderStrategyType.Random,
+                false);
             var controller = ControllerBuilder.Build(problem);
             controller.FindSolutions();
             controller.PrintResult();
         }
-
-        
     }
 }

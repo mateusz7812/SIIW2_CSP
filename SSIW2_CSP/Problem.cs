@@ -15,13 +15,15 @@ namespace SSIW2_CSP
         public int Dimension { get; }
 
         public Problem(int dimension, ProblemType problemType, CrawlerType crawlerType,
-            LabelOrderStrategyType labelOrderStrategyType, ValueOrderStrategyType valueOrderStrategyType)
+            LabelOrderStrategyType labelOrderStrategyType, ValueOrderStrategyType valueOrderStrategyType,
+            bool debug)
         {
             Dimension = dimension;
             ProblemType = problemType;
             CrawlerType = crawlerType;
             LabelOrderStrategyType = labelOrderStrategyType;
             ValueOrderStrategyType = valueOrderStrategyType;
+            Debug = debug;
         }
 
         public List<IConstraint> Constraints { get; init; } = new ();
@@ -32,19 +34,22 @@ namespace SSIW2_CSP
         public LabelOrderStrategyType LabelOrderStrategyType { get; }
         public List<ILabel<T>> NotOrderedLabels { get; set; }
         public ValueOrderStrategyType ValueOrderStrategyType { get; }
+        public bool Debug { get; }
 
-        private void WriteFreeDomainValuesCount()
+        public void WriteFreeDomainValuesCount()
         {
-            Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new {Index = i, Value = x})
+            if(Debug)
+                Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new {Index = i, Value = x})
                 .GroupBy(x => x.Index / Dimension)
-                .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))) + "\t" + Solutions.Count);
+                .Select(x => string.Join(" ", x.Select(l => l.Value.FreeDomainValues.Count)))));
         }
         
-        private void WriteValues()
+        public void WriteValues()
         {
-            Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new {Index = i, Value = x})
+            if(Debug)
+                Console.WriteLine(string.Join("  ", Labels.Select((x, i) => new {Index = i, Value = x})
                 .GroupBy(x => x.Index / Dimension)
-                .Select(x => string.Join(" ", x.Select(l => l.Value.Value)))) + "\t" + Solutions.Count);
+                .Select(x => string.Join(" ", x.Select(l => l.Value.Value.HasValue ? l.Value.Value.ToString() : "-")))));
         }
     }
 }
